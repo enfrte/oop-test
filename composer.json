@@ -1,0 +1,10 @@
+{
+    "name": "me/oop-test",
+    "autoload": {
+        "psr-4": {
+            "Me\\OopTest\\": "src/"
+        }
+    },
+    "require": {}
+}
+

@@ -3,8 +3,7 @@
 /**
  * Main launch file for testing. 
  * 
- * An app that demonstrates the use of the Composition design pattern.
- * The app has a Licence feature. The app can create an official licence by country locale and a custom licence by company.
+ * The test app is a Licence feature. The app can create an official licence by country locale and a custom licence by company.
  * Official licences are recognised in the country locale and are available to all companies based in the country. 
  * Custom licences are created and recognised by the company.
  * There would be two tables for these types of licences. 

@@ -63,7 +63,7 @@ class ValidateTokenReservation {
 
 class GeneralOnlineCourseFormData implements FormData {
     private $participantList = [];
-    private $requestData = [];
+    private $requestData; // http request
 
     public function __construct(array $requestData) {
         $this->requestData = $requestData;
@@ -163,10 +163,10 @@ class PreAllocateToken {
 }
 
 // Setup
-$formData = new GeneralOnlineCourseFormData([/* Dummy form data */]);
-$preAllocateToken = new PreAllocateToken($formData);
+$formData = new GeneralOnlineCourseFormData([/* Put the http request here */]);
 $companyTokenAvailability = new CompanyTokenAvailability(400);
 $validateTokenReservation = new ValidateTokenReservation($companyTokenAvailability, $formData->getTokenTotalRequested());
+$preAllocateToken = new PreAllocateToken($formData);
 $tokenPreAllocation = new TokenPreAllocation(
     $validateTokenReservation,
     $preAllocateToken

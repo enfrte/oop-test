@@ -8,26 +8,7 @@ ini_set('display_startup_errors', 1);
 interface FormData {
     public function getParticipantList() : array;
     public function getTokenTotalRequested() : int;
-}
-
-class TokenPreAllocation {
-    private ValidateTokenReservation $validateTokenReservation;
-    private PreAllocateToken $preAllocateToken;
-
-    public function __construct(
-        ValidateTokenReservation $validateTokenReservation, 
-        PreAllocateToken $preAllocateToken
-    ) {
-        $this->validateTokenReservation = $validateTokenReservation;
-        $this->preAllocateToken = $preAllocateToken;
-    }
-
-    public function preAllocateTokens() {
-        $this->validateTokenReservation->validate();
-        $this->preAllocateToken->save();
-        echo 'Done';
-    }
-    
+    public function getCourseTypes() : int;
 }
 
 class CompanyTokenAvailability {
@@ -102,6 +83,10 @@ class GeneralOnlineCourseFormData implements FormData {
 
         return $totalTokensRequested;
     }
+
+    public function getCourseTypes() : int {
+        return $this->requestData['courseTypes'];
+    }
 }
 
 class AdrFormData implements FormData {
@@ -145,6 +130,10 @@ class AdrFormData implements FormData {
 
         return $totalTokensRequested;
     }
+
+    public function getCourseTypes() : int {
+        return $this->requestData['courseTypes'];
+    }
 }
 
 // Saves participants token pre-allocations to the db  
@@ -162,15 +151,54 @@ class PreAllocateToken {
     }
 }
 
-// Setup
-$formData = new GeneralOnlineCourseFormData([/* Put the http request here */]);
-$companyTokenAvailability = new CompanyTokenAvailability(400);
-$validateTokenReservation = new ValidateTokenReservation($companyTokenAvailability, $formData->getTokenTotalRequested());
-$preAllocateToken = new PreAllocateToken($formData);
-$tokenPreAllocation = new TokenPreAllocation(
-    $validateTokenReservation,
-    $preAllocateToken
-);
+class TokenPreAllocation {
+    private ValidateTokenReservation $validateTokenReservation;
+    private PreAllocateToken $preAllocateToken;
+
+    public function __construct(
+        ValidateTokenReservation $validateTokenReservation, 
+        PreAllocateToken $preAllocateToken
+    ) {
+        $this->validateTokenReservation = $validateTokenReservation;
+        $this->preAllocateToken = $preAllocateToken;
+    }
+
+    public function preAllocateTokens() {
+        $this->validateTokenReservation->validate();
+        $this->preAllocateToken->save();
+        echo 'Done';
+    }
+    
+}
+
+class TokenPreAllocationFactory {
+    public static function create(int $companyId) : TokenPreAllocation {
+        $requestData = [
+            'courseTypes' => [112],
+            'participantList' => [1000, 1001],
+            'tokenTotalRequested' => 0,
+        ];
+
+        if ( in_array(114, $requestData['courseTypes']) && $requestData['courseTypes'] > 1 ) {
+            throw new Exception("ADR cannot be combined with other course types");
+        }
+
+        if ( in_array(114, $requestData['courseTypes']) ) {
+            $formData = new AdrFormData($requestData);
+        }
+        else {
+            $formData = new GeneralOnlineCourseFormData($requestData);
+        }
+
+        $companyTokenAvailability = new CompanyTokenAvailability($companyId);
+        $validateTokenReservation = new ValidateTokenReservation($companyTokenAvailability, $formData->getTokenTotalRequested());
+        $preAllocateToken = new PreAllocateToken($formData);
+        return new TokenPreAllocation(
+            $validateTokenReservation,
+            $preAllocateToken
+        );
+    }
+}
 
 // Finally
-$tokenPreAllocation->preAllocateTokens();
+TokenPreAllocationFactory::create(400);

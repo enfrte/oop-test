@@ -172,14 +172,10 @@ class TokenPreAllocation {
 }
 
 class TokenPreAllocationFactory {
-    public static function create(int $companyId) : TokenPreAllocation {
-        $requestData = [
-            'courseTypes' => [112],
-            'participantList' => [1000, 1001],
-            'tokenTotalRequested' => 0,
-        ];
-
-        if ( in_array(114, $requestData['courseTypes']) && $requestData['courseTypes'] > 1 ) {
+    public static function create(array $requestData, int $companyId) : TokenPreAllocation {
+        $courseTypes = $requestData['courseTypes'];
+        
+        if ( in_array(114, $courseTypes) && count($courseTypes) > 1 ) {
             throw new Exception("ADR cannot be combined with other course types");
         }
 
@@ -193,6 +189,7 @@ class TokenPreAllocationFactory {
         $companyTokenAvailability = new CompanyTokenAvailability($companyId);
         $validateTokenReservation = new ValidateTokenReservation($companyTokenAvailability, $formData->getTokenTotalRequested());
         $preAllocateToken = new PreAllocateToken($formData);
+        
         return new TokenPreAllocation(
             $validateTokenReservation,
             $preAllocateToken
@@ -201,4 +198,11 @@ class TokenPreAllocationFactory {
 }
 
 // Finally
-TokenPreAllocationFactory::create(400);
+
+$requestData = [
+    'courseTypes' => [112],
+    'participantList' => [1000, 1001],
+    'tokenAllocation' => 2,
+];
+
+TokenPreAllocationFactory::create($requestData, 400);

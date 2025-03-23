@@ -7,21 +7,19 @@ ini_set('display_startup_errors', 1);
 
 interface FormData {
     public function getParticipantList() : array;
+    public function getTokenTotalRequested() : int;
 }
 
 class TokenPreAllocation {
-    private $validateTokenReservation;
-    private $preAllocateToken;
-    private $formData;
+    private ValidateTokenReservation $validateTokenReservation;
+    private PreAllocateToken $preAllocateToken;
 
     public function __construct(
         ValidateTokenReservation $validateTokenReservation, 
-        PreAllocateToken $preAllocateToken, 
-        FormData $formData
+        PreAllocateToken $preAllocateToken
     ) {
         $this->validateTokenReservation = $validateTokenReservation;
         $this->preAllocateToken = $preAllocateToken;
-        $this->formData = $formData;
     }
 
     public function preAllocateTokens() {
@@ -33,10 +31,10 @@ class TokenPreAllocation {
 }
 
 class CompanyTokenAvailability {
-    private $companyId = null;
+    private $companyId;
 
-    public function __construct($comapnyId) {
-        $this->companyId = $comapnyId;
+    public function __construct(int $companyId) {
+        $this->companyId = $companyId;
     }
 
     public function getAmount() {
@@ -46,7 +44,7 @@ class CompanyTokenAvailability {
 }
 
 class ValidateTokenReservation {
-    private $companyTokenAvailability;
+    private CompanyTokenAvailability $companyTokenAvailability;
     private $totalTokensRequested;
 
     public function __construct(CompanyTokenAvailability $companyTokenAvailability, int $totalTokensRequested) {
@@ -56,7 +54,7 @@ class ValidateTokenReservation {
 
     public function validate() {
         if ($this->companyTokenAvailability->getAmount() < $this->totalTokensRequested) {
-            echo"Not enough tokens available";
+            echo "Not enough tokens available"; // Just for demo purposes
             throw new Exception("Not enough tokens available");
         }
         return true;
@@ -151,30 +149,27 @@ class AdrFormData implements FormData {
 
 // Saves participants token pre-allocations to the db  
 class PreAllocateToken {
-    private $participantList = [];
+    private FormData $formData;
 
-    public function __construct($participantList) {
-        $this->participantList = $participantList;    
+    public function __construct(FormData $formData) {
+        $this->formData = $formData;
     }
 
     public function save(): bool {
-        // Iterate over participant list and save tokens to db
+        $participantList = $this->formData->getParticipantList();
+        // Iterate over participant list and save tokens to DB
         return true;
     }
-
 }
-
 
 // Setup
 $formData = new GeneralOnlineCourseFormData([/* Dummy form data */]);
-$participantList = $formData->getParticipantList();
-$preAllocateToken = new PreAllocateToken($participantList);
+$preAllocateToken = new PreAllocateToken($formData);
 $companyTokenAvailability = new CompanyTokenAvailability(400);
 $validateTokenReservation = new ValidateTokenReservation($companyTokenAvailability, $formData->getTokenTotalRequested());
 $tokenPreAllocation = new TokenPreAllocation(
     $validateTokenReservation,
-    $preAllocateToken,
-    $formData
+    $preAllocateToken
 );
 
 // Finally
